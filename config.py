@@ -2,6 +2,7 @@
 
 import settings
 
+
 class Config:
     DEVELOPMENT = False
     DEBUG = False
