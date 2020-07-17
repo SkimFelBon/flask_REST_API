@@ -12,4 +12,5 @@ class Config:
 class DevelopmentConfig(Config):
     DEBUG = True
     DEVELOPMENT = True
-    SQLALCHEMY_DATABASE_URI = "sqlite:///database.sqlite3" # relative path
+    # SQLALCHEMY_DATABASE_URI = "sqlite:///database.sqlite3" # relative path
+    SQLALCHEMY_DATABASE_URI = settings.SQLALCHEMY_DATABASE_URI
