@@ -1,6 +1,6 @@
 # app.py
 # RE.S.T. Representational State Transfer
-from flask import Flask, request, jsonify, abort
+from flask import Flask, request, jsonify, json, abort
 from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import generate_password_hash, check_password_hash
 from marshmallow import ValidationError
@@ -8,7 +8,7 @@ from authlib.jose import jwt
 from datetime import datetime, timedelta
 from functools import wraps
 import config
-
+import base64
 app = Flask(__name__)
 app.config.from_object(config.DevelopmentConfig)
 db = SQLAlchemy(app)
@@ -44,20 +44,45 @@ def error_unprocessable_entity(e):
     return jsonify(error=str(e)), 422
 
 
+@app.after_request
+def update_user_last_request(response):
+    """Function used to update time of users last_request"""
+    token = None
+    if 'x-access-token' in request.headers:
+        token = request.headers['x-access-token']
+    if not token:
+        return response
+    header, payload, signature = token.split('.')
+    bytes_payload = base64.b64decode(payload)
+    dict_payload = json.loads(bytes_payload)
+    expire_at = datetime.utcfromtimestamp(dict_payload['exp'])
+    curr_time = datetime.utcnow()
+    if expire_at < curr_time:
+        return response
+    user = User.query.get(dict_payload['sub'])
+    user.last_request = curr_time
+    db.session.commit()
+    return response
+
+
 def token_required(f):
     @wraps(f)
     def decorated(*args, **kwargs):
         token = None
+        # TODO: improve response descriptions?
         if 'x-access-token' in request.headers:
             token = request.headers['x-access-token']
         if not token:
-            return jsonify({'message': 'Token is missing!'}), 401
+            return jsonify(abort(401, description="Token is invalid"))
         try:
             data = jwt.decode(token, app.config['SECRET_KEY'])
         except Exception as error:
             app.logger.info(error)
-            return jsonify({'message': 'Token is invalid'}), 401
-        # TODO: also I need to check token expiretion date
+            return jsonify(abort(401, description="Token is invalid"))
+        # also check token expiretion date
+        expire_at = datetime.utcfromtimestamp(data['exp'])
+        if expire_at < datetime.utcnow():
+            return jsonify(abort(401, description="Token is invalid"))
         current_user = User.query.filter_by(id=data['sub']).first()
         return f(current_user, *args, **kwargs)
     return decorated
@@ -67,7 +92,7 @@ def token_required(f):
 @token_required
 def get_user_temp(current_user, pk):
     user = user_schema.dump(User.query.get(pk))
-    app.logger.info(user)
+    # app.logger.info(user)
     return jsonify({"user": user})
 
 
@@ -120,10 +145,14 @@ def login():
         return jsonify(abort(401))
     secret_key = app.config['SECRET_KEY']
     header = {'alg': 'HS256', 'typ': 'JWT'}
-    expire_at = datetime.utcnow() + timedelta(seconds=180)  # later use minutes
+    last_login = datetime.utcnow()
+    app.logger.info(f"datetime.tzinfo: {datetime.tzinfo}")
+    app.logger.info(f"datetime.utcnow(): {datetime.utcnow()}")
+    expire_at = last_login + timedelta(seconds=app.config['TOKEN_EXP'])
     payload = {'iss': 'Authlib', 'sub': user.id, 'exp': expire_at}
     signed_token = jwt.encode(header, payload, secret_key)
-    # return to a user token
+    user.last_login = last_login
+    db.session.commit()
     return jsonify({"token": signed_token.decode('utf-8')})
 
 
@@ -132,12 +161,6 @@ def post():
     """TODO: leave post"""
     return
 
-
-@app.route('/logout')
-def logout():
-    """TODO: logout user"""
-    # remove jwt?
-    return
 
 # when updating smth in db with PUT return 201 created
 # DELETE returns 200 | or 404 not found
