@@ -13,10 +13,11 @@ app = Flask(__name__)
 app.config.from_object(config.DevelopmentConfig)
 db = SQLAlchemy(app)
 
-from models import User  # , Post, Like
-from schemas import UserSchema
+from models import User, Post, Like
+from schemas import UserSchema, PostSchema
 
 user_schema = UserSchema()
+post_schema = PostSchema()
 
 
 @app.errorhandler(409)
@@ -92,7 +93,6 @@ def token_required(f):
 @token_required
 def get_user_temp(current_user, pk):
     user = user_schema.dump(User.query.get(pk))
-    # app.logger.info(user)
     return jsonify({"user": user})
 
 
@@ -126,7 +126,7 @@ def signup():
 
 @app.route('/login', methods=['POST'])
 def login():
-    """TODO: Logins user"""
+    """Logins user"""
     json_data = request.get_json()
     app.logger.info(f"json_data: {json_data}")
     if not json_data:
@@ -156,11 +156,36 @@ def login():
     return jsonify({"token": signed_token.decode('utf-8')})
 
 
-@app.route('/post')
-def post():
-    """TODO: leave post"""
-    return
+@app.route('/post', methods=['POST'])
+@token_required
+def post(current_user):
+    """Leave post"""
+    json_data = request.get_json()
+    app.logger.info(f"json_data: {json_data}")
+    if not json_data:
+        return abort(400)
+    try:
+        data = post_schema.load(json_data)
+    except ValidationError as error:
+        app.logger.info(error)
+        return abort(422)
+    title, desc = data
+    new_post = Post(
+                    title=title,
+                    description=desc,
+                    created=datetime.utcnow(),
+                    author_id=current_user.id)
+    db.session.add(new_post)
+    db.session.commit()
+    app.logger.info(f"data: {data}")
+    post = post_schema.dump(Post.query.get(new_post.id))
+    return jsonify({'message': 'Created new post.', "post": post})
 
+
+@app.route('/like', methods=['POST'])
+@token_required
+def like(current_user):
+    return jsonify({"like": "TODO"})
 
 # when updating smth in db with PUT return 201 created
 # DELETE returns 200 | or 404 not found

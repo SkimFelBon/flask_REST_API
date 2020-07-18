@@ -15,17 +15,6 @@ class User(db.Model):
     posts = db.relationship('Post', backref='user')
     likes = db.relationship('Like', backref='user')
 
-    def __init__(self, **kwargs):
-        self.id = kwargs.get('id')
-        self.first_name = kwargs.get('first_name')
-        self.last_name = kwargs.get('last_name')
-        self.email = kwargs.get('email')
-        self.password = kwargs.get('password')
-        self.last_login = kwargs.get('last_login')
-        self.last_request = kwargs.get('last_request')
-        self.posts = kwargs.get('posts')
-        self.likes = kwargs.get('likes')
-
     def __repr__(self):
         return '<User: {} {} {}>'.format(
             self.first_name, self.last_name, self.email)

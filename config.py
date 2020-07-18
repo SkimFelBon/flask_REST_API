@@ -8,7 +8,7 @@ class Config:
     DEBUG = False
     SECRET_KEY = settings.SECRET_KEY
     SQLALCHEMY_TRACK_MODIFICATIONS = False
-    TOKEN_EXP = 180  # later use minutes
+    TOKEN_EXP = 1800
 
 
 class DevelopmentConfig(Config):
