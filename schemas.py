@@ -18,3 +18,11 @@ class PostSchema(Schema):
     description = fields.Str()
     created = fields.DateTime(dump_only=True)
     author_id = fields.Int(dump_only=True)
+
+
+class LikeSchema(Schema):
+    id = fields.Int(dump_only=True)
+    liked = fields.Bool(dump_only=True)
+    time_when_user_liked = fields.DateTime(dump_only=True)
+    user_id = fields.Int(dump_only=True)
+    post_id = fields.Int()

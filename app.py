@@ -14,10 +14,11 @@ app.config.from_object(config.DevelopmentConfig)
 db = SQLAlchemy(app)
 
 from models import User, Post, Like
-from schemas import UserSchema, PostSchema
+from schemas import UserSchema, PostSchema, LikeSchema
 
 user_schema = UserSchema()
 post_schema = PostSchema()
+like_schema = LikeSchema()
 
 
 @app.errorhandler(409)
@@ -113,8 +114,7 @@ def signup():
         return jsonify(
             abort(409, description="User with such email already exist"))
     hashed_pass = generate_password_hash(data['password'], method='sha256')
-    new_user = User(
-                    first_name=data['first_name'],
+    new_user = User(first_name=data['first_name'],
                     last_name=data['last_name'],
                     email=data['email'],
                     password=hashed_pass)
@@ -170,8 +170,7 @@ def post(current_user):
         app.logger.info(error)
         return abort(422)
     title, desc = data
-    new_post = Post(
-                    title=title,
+    new_post = Post(title=title,
                     description=desc,
                     created=datetime.utcnow(),
                     author_id=current_user.id)
@@ -182,10 +181,46 @@ def post(current_user):
     return jsonify({'message': 'Created new post.', "post": post})
 
 
-@app.route('/like', methods=['POST'])
+@app.route('/like', methods=['PUT'])
 @token_required
 def like(current_user):
-    return jsonify({"like": "TODO"})
+    # TODO: how to supply value for a decorator?
+    # so I can supply specific schema to every route?
+    json_data = request.get_json()
+    app.logger.info(f"json_data: {json_data}")
+    if not json_data:
+        return abort(400)
+    try:
+        data = like_schema.load(json_data)
+    except ValidationError as error:
+        app.logger.info(error)
+        return abort(422)
+    post = Post.query.filter_by(id=data['post_id']).first()
+    if not post:
+        return jsonify(
+            abort(409, description="Post with such id doesn't exist"))
+    like_exist = Like.query.filter_by(user_id=current_user.id,
+                                      post_id=data['post_id']
+                                      ).first()
+    if like_exist:
+        # if like exist, check if user already liked post?
+        if like_exist.liked:
+            return jsonify(
+                abort(409, description="Post already liked"))
+        # if user previosly disliked and want to like again: update record
+        like_exist.liked = True
+        db.session.commit()
+    else:
+        # create record in like table
+        new_like = Like(
+                    liked=True,
+                    time_when_user_liked=datetime.utcnow(),
+                    user_id=current_user.id,
+                    post_id=data['post_id'])
+        db.session.add(new_like)
+        db.session.commit()
+    return jsonify({"message": "Liked post"}), 201
+
 
 # when updating smth in db with PUT return 201 created
 # DELETE returns 200 | or 404 not found
