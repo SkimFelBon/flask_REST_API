@@ -90,10 +90,10 @@ def token_required(f):
     return decorated
 
 
-@app.route('/users/<pk>')
+@app.route('/api/users/<int:prim_key>')
 @token_required
-def get_user_temp(current_user, pk):
-    user = user_schema.dump(User.query.get(pk))
+def get_user_temp(current_user, prim_key):
+    user = user_schema.dump(User.query.get(prim_key))
     return jsonify({"user": user})
 
 
@@ -181,26 +181,18 @@ def post(current_user):
     return jsonify({'message': 'Created new post.', "post": post})
 
 
-@app.route('/like', methods=['PUT'])
+@app.route('/api/like/<int:post_id>', methods=['PUT'])
 @token_required
-def like(current_user):
+def like(current_user, post_id):
+    # TODO: replace like/unlike with single route that can handle both requests
     # TODO: how to supply value for a decorator?
     # so I can supply specific schema to every route?
-    json_data = request.get_json()
-    app.logger.info(f"json_data: {json_data}")
-    if not json_data:
-        return abort(400)
-    try:
-        data = like_schema.load(json_data)
-    except ValidationError as error:
-        app.logger.info(error)
-        return abort(422)
-    post = Post.query.filter_by(id=data['post_id']).first()
+    post = Post.query.filter_by(id=post_id).first()
     if not post:
         return jsonify(
             abort(409, description="Post with such id doesn't exist"))
     like_exist = Like.query.filter_by(user_id=current_user.id,
-                                      post_id=data['post_id']
+                                      post_id=post_id
                                       ).first()
     if like_exist:
         # if like exist, check if user already liked post?
@@ -209,6 +201,7 @@ def like(current_user):
                 abort(409, description="Post already liked"))
         # if user previosly disliked and want to like again: update record
         like_exist.liked = True
+        like_exist.time_when_user_liked = datetime.utcnow()
         db.session.commit()
     else:
         # create record in like table
@@ -216,10 +209,40 @@ def like(current_user):
                     liked=True,
                     time_when_user_liked=datetime.utcnow(),
                     user_id=current_user.id,
-                    post_id=data['post_id'])
+                    post_id=post_id)
         db.session.add(new_like)
         db.session.commit()
     return jsonify({"message": "Liked post"}), 201
+
+
+@app.route('/api/unlike/<int:post_id>', methods=['PUT'])
+@token_required
+def unlike(current_user, post_id):
+    post = Post.query.get(post_id)
+    if not post:
+        return jsonify(
+            abort(409, description="Post with such id doesn't exist"))
+    # check if like exist
+    like_exist = Like.query.filter_by(user_id=current_user.id,
+                                      post_id=post_id
+                                      ).first()
+    if like_exist:
+        if not like_exist.liked:
+            return jsonify(
+                abort(409, description="Post already unliked"))
+        like_exist.liked = False
+        like_exist.time_when_user_liked = datetime.utcnow()
+        db.session.commit()
+    else:
+        # like doesn't exists
+        new_like = Like(
+                    liked=False,
+                    time_when_user_liked=datetime.utcnow(),
+                    user_id=current_user.id,
+                    post_id=post_id)
+        db.session.add(new_like)
+        db.session.commit()
+    return jsonify({"message": "Unliked post"}), 201
 
 
 # when updating smth in db with PUT return 201 created
