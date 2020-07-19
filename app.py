@@ -37,11 +37,6 @@ def error_bad_request(e):
     return jsonify(error=str(e)), 400
 
 
-@app.errorhandler(403)
-def error_forbidden(e):
-    return jsonify(error=str(e)), 403
-
-
 @app.errorhandler(422)
 def error_unprocessable_entity(e):
     return jsonify(error=str(e)), 422
