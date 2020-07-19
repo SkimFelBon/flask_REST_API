@@ -11,6 +11,7 @@ import config
 import base64
 app = Flask(__name__)
 app.config.from_object(config.DevelopmentConfig)
+# TODO: Use flask_marshmallow
 db = SQLAlchemy(app)
 
 from models import User, Post, Like
@@ -97,7 +98,7 @@ def get_user_temp(current_user, prim_key):
     return jsonify({"user": user})
 
 
-@app.route('/signup', methods=['POST'])
+@app.route('/api/signup', methods=['POST'])
 def signup():
     # validate input
     json_data = request.get_json()
@@ -124,7 +125,7 @@ def signup():
     return jsonify({'message': 'Created new User.', "user": user})
 
 
-@app.route('/login', methods=['POST'])
+@app.route('/api/login', methods=['POST'])
 def login():
     """Logins user"""
     json_data = request.get_json()
@@ -156,7 +157,7 @@ def login():
     return jsonify({"token": signed_token.decode('utf-8')})
 
 
-@app.route('/post', methods=['POST'])
+@app.route('/api/post', methods=['POST'])
 @token_required
 def post(current_user):
     """Leave post"""
@@ -184,9 +185,8 @@ def post(current_user):
 @app.route('/api/like/<int:post_id>', methods=['PUT'])
 @token_required
 def like(current_user, post_id):
-    # TODO: replace like/unlike with single route that can handle both requests
-    # TODO: how to supply value for a decorator?
-    # so I can supply specific schema to every route?
+    # TODO: maybe replace like/unlike with single route that can handle
+    # both requests, so I can supply specific schema to every route?
     post = Post.query.filter_by(id=post_id).first()
     if not post:
         return jsonify(
@@ -245,7 +245,18 @@ def unlike(current_user, post_id):
     return jsonify({"message": "Unliked post"}), 201
 
 
-# when updating smth in db with PUT return 201 created
-# DELETE returns 200 | or 404 not found
-# POST returns 200
-# GET returns 200
+@app.route('/api/analytics/')
+@token_required
+def analytics(current_user):
+    date_from = datetime.strptime(request.args.get("date_from"), "%Y-%m-%d")
+    date_to = datetime.strptime(request.args.get("date_to"), "%Y-%m-%d")
+    my_query = (db.session.query(
+                db.func.date_part('day', Like.time_when_user_liked)
+                .label("day"),
+                db.func.count(Like.liked))
+                .filter(db.and_(Like.time_when_user_liked >= date_from,
+                                Like.time_when_user_liked <= date_to,
+                                Like.liked))
+                .group_by("day").all())
+    # TODO: maybe cast days to int from float?
+    return jsonify({"likes_per_day": my_query})

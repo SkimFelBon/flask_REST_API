@@ -38,6 +38,6 @@ class Like(db.Model):
     # consists of, post id, user id, time_when_user_liked,
     id = db.Column(db.Integer, primary_key=True)
     liked = db.Column(db.Boolean, nullable=False)
-    time_when_user_liked = db.Column(db.String(255), nullable=False)
+    time_when_user_liked = db.Column(db.DateTime, nullable=False)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     post_id = db.Column(db.Integer, db.ForeignKey('post.id'), nullable=False)
