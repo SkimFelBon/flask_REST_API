@@ -105,7 +105,6 @@ def signup():
         app.logger.info(error)
         return abort(422)
     user_exist = User.query.filter(User.email == data['email']).first()
-    app.logger.info(user_exist)
     if user_exist:
         return jsonify(
             abort(409, description="User with such email already exist"))
@@ -124,7 +123,6 @@ def signup():
 def login():
     """Logins user"""
     json_data = request.get_json()
-    app.logger.info(f"json_data: {json_data}")
     if not json_data:
         return abort(400)
     try:
@@ -142,8 +140,6 @@ def login():
     secret_key = app.config['SECRET_KEY']
     header = {'alg': 'HS256', 'typ': 'JWT'}
     last_login = datetime.utcnow()
-    app.logger.info(f"datetime.tzinfo: {datetime.tzinfo}")
-    app.logger.info(f"datetime.utcnow(): {datetime.utcnow()}")
     expire_at = last_login + timedelta(seconds=app.config['TOKEN_EXP'])
     payload = {'iss': 'Authlib', 'sub': user.id, 'exp': expire_at}
     signed_token = jwt.encode(header, payload, secret_key)
@@ -157,7 +153,6 @@ def login():
 def post(current_user):
     """Leave post"""
     json_data = request.get_json()
-    app.logger.info(f"json_data: {json_data}")
     if not json_data:
         return abort(400)
     try:
@@ -172,7 +167,6 @@ def post(current_user):
                     author_id=current_user.id)
     db.session.add(new_post)
     db.session.commit()
-    app.logger.info(f"data: {data}")
     post = post_schema.dump(Post.query.get(new_post.id))
     return jsonify({'message': 'Created new post.', "post": post})
 
