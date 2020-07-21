@@ -5,13 +5,13 @@ from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import generate_password_hash, check_password_hash
 from marshmallow import ValidationError
 from authlib.jose import jwt
+from authlib.jose.errors import DecodeError, BadSignatureError
 from datetime import datetime, timedelta
 from functools import wraps
 import config
 import base64
 app = Flask(__name__)
 app.config.from_object(config.DevelopmentConfig)
-# TODO: Use flask_marshmallow
 db = SQLAlchemy(app)
 
 from models import User, Post, Like
@@ -67,15 +67,14 @@ def token_required(f):
     @wraps(f)
     def decorated(*args, **kwargs):
         token = None
-        # TODO: improve response descriptions?
         if 'x-access-token' in request.headers:
             token = request.headers['x-access-token']
         if not token:
             return jsonify(abort(401, description="Token is invalid"))
         try:
             data = jwt.decode(token, app.config['SECRET_KEY'])
-        except Exception as error:
-            app.logger.info(error)
+        except (DecodeError, BadSignatureError) as error:
+            app.logger.warn(error)
             return jsonify(abort(401, description="Token is invalid"))
         # also check token expiretion date
         expire_at = datetime.utcfromtimestamp(data['exp'])
@@ -174,8 +173,6 @@ def post(current_user):
 @app.route('/api/like/<int:post_id>', methods=['PUT'])
 @token_required
 def like(current_user, post_id):
-    # TODO: maybe replace like/unlike with single route that can handle
-    # both requests, so I can supply specific schema to every route?
     post = Post.query.filter_by(id=post_id).first()
     if not post:
         return jsonify(
@@ -247,5 +244,4 @@ def analytics(current_user):
                                 Like.time_when_user_liked <= date_to,
                                 Like.liked))
                 .group_by("day").all())
-    # TODO: maybe cast days to int from float?
     return jsonify({"likes_per_day": my_query})
