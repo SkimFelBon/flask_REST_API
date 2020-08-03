@@ -7,6 +7,38 @@ sudo pip install virtualenv
 git clone https://github.com/SkimFelBon/flask_REST_API
 cd ./flask_REST_API/
 sudo pip install -r requirements.txt
+# pull postgres-image from docker hub: https://hub.docker.com/_/postgres
+# start docker container
+# connect to container
+docker exec -it <container_id> bash
+```
+## Create database
+```
+# connect to postgresql from command line:
+psql -U postgres
+CREATE DATABASE rest_api;
+-- verify that db was created (list all databases with \l command):
+\l
+# dump data to database:
+psql rest_api < dumpfile -U postgres
+# jump to psql one more time, select db and verify that data exists:
+psql -U postgres
+-- connect to our database:
+\c rest_api
+-- verify data:
+select * from "user";
+```
+## also create settings.py
+```python
+# settings.py
+DB_NAME = "rest_api"
+USER = "postgres"
+PASS = "yourpassword"
+SQLALCHEMY_DATABASE_URI = f"postgresql://{USER}:{PASS}@localhost/{DB_NAME}?client_encoding=utf8"
+```
+## start app
+```
+flask run
 ```
 #### Basic features:
 * user signup.
