@@ -1,4 +1,4 @@
-# Flask_REST_API
+# Flask_REST_API for Social Network
 
 ### Installation:
 ## Getting Started
@@ -8,15 +8,17 @@ git clone https://github.com/SkimFelBon/flask_REST_API
 cd ./flask_REST_API/
 sudo pip install -r requirements.txt
 ```
-#### list of routes:
-* user signup. POST
-* user login. POST
-* post creation. POST
-* post like. PUT
-* post unlike. PUT
+#### Basic features:
+* user signup.
+* user login.
+* post creation.
+* post like.
+* post unlike.
 * analytics about how many likes was made. Example url
 /api/analytics/?date_from=2020-02-02&date_to=2020-02-15. analytics aggregated by day. GET
-* search user. GET
+* search user.
+* user activity an endpoint which will show when user was login last time and when he mades a last request to the service.
+* Implemented token authentication, using JWT
 #### Signup route
 ```sh
 http://127.0.0.1:5000/api/signup/
