@@ -1,0 +1,300 @@
+--
+-- PostgreSQL database dump
+--
+
+-- Dumped from database version 12.2 (Debian 12.2-2.pgdg100+1)
+-- Dumped by pg_dump version 12.2 (Debian 12.2-2.pgdg100+1)
+
+SET statement_timeout = 0;
+SET lock_timeout = 0;
+SET idle_in_transaction_session_timeout = 0;
+SET client_encoding = 'UTF8';
+SET standard_conforming_strings = on;
+SELECT pg_catalog.set_config('search_path', '', false);
+SET check_function_bodies = false;
+SET xmloption = content;
+SET client_min_messages = warning;
+SET row_security = off;
+
+SET default_tablespace = '';
+
+SET default_table_access_method = heap;
+
+--
+-- Name: alembic_version; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.alembic_version (
+    version_num character varying(32) NOT NULL
+);
+
+
+ALTER TABLE public.alembic_version OWNER TO postgres;
+
+--
+-- Name: like; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public."like" (
+    id integer NOT NULL,
+    liked boolean NOT NULL,
+    time_when_user_liked timestamp without time zone NOT NULL,
+    user_id integer NOT NULL,
+    post_id integer NOT NULL
+);
+
+
+ALTER TABLE public."like" OWNER TO postgres;
+
+--
+-- Name: like_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+--
+
+CREATE SEQUENCE public.like_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER TABLE public.like_id_seq OWNER TO postgres;
+
+--
+-- Name: like_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+--
+
+ALTER SEQUENCE public.like_id_seq OWNED BY public."like".id;
+
+
+--
+-- Name: post; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.post (
+    id integer NOT NULL,
+    title character varying(255) NOT NULL,
+    description character varying(255) NOT NULL,
+    created timestamp without time zone NOT NULL,
+    author_id integer NOT NULL
+);
+
+
+ALTER TABLE public.post OWNER TO postgres;
+
+--
+-- Name: post_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+--
+
+CREATE SEQUENCE public.post_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER TABLE public.post_id_seq OWNER TO postgres;
+
+--
+-- Name: post_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+--
+
+ALTER SEQUENCE public.post_id_seq OWNED BY public.post.id;
+
+
+--
+-- Name: user; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public."user" (
+    id integer NOT NULL,
+    first_name character varying(255) NOT NULL,
+    last_name character varying(255) NOT NULL,
+    password character varying(256) NOT NULL,
+    email character varying(255) NOT NULL,
+    last_login timestamp without time zone,
+    last_request timestamp without time zone
+);
+
+
+ALTER TABLE public."user" OWNER TO postgres;
+
+--
+-- Name: user_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+--
+
+CREATE SEQUENCE public.user_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER TABLE public.user_id_seq OWNER TO postgres;
+
+--
+-- Name: user_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+--
+
+ALTER SEQUENCE public.user_id_seq OWNED BY public."user".id;
+
+
+--
+-- Name: like id; Type: DEFAULT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public."like" ALTER COLUMN id SET DEFAULT nextval('public.like_id_seq'::regclass);
+
+
+--
+-- Name: post id; Type: DEFAULT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.post ALTER COLUMN id SET DEFAULT nextval('public.post_id_seq'::regclass);
+
+
+--
+-- Name: user id; Type: DEFAULT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public."user" ALTER COLUMN id SET DEFAULT nextval('public.user_id_seq'::regclass);
+
+
+--
+-- Data for Name: alembic_version; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY public.alembic_version (version_num) FROM stdin;
+\.
+
+
+--
+-- Data for Name: like; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY public."like" (id, liked, time_when_user_liked, user_id, post_id) FROM stdin;
+3	t	2020-07-19 11:53:14.600741	2	1
+2	t	2020-07-18 00:00:00	1	1
+1	t	2020-07-19 11:49:34.923891	3	1
+4	t	2020-07-21 10:36:00.056673	4	1
+5	t	2020-07-21 10:36:09.710456	4	2
+\.
+
+
+--
+-- Data for Name: post; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY public.post (id, title, description, created, author_id) FROM stdin;
+1	title	description	2020-07-19 11:49:00.704284	3
+2	title	description	2020-07-19 15:24:49.510789	4
+3	description	title	2020-07-21 10:37:17.512975	4
+\.
+
+
+--
+-- Data for Name: user; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY public."user" (id, first_name, last_name, password, email, last_login, last_request) FROM stdin;
+2	Bob	Kirkland	sha256$9v5zYLy9$8e1be1f21dc3d6773375f10a65f8e43f7b09d564a9269838503bde60cd18269f	Bob.Kirk@mail.com	2020-07-19 14:40:22.17969	2020-07-19 14:41:42.529046
+3	Craig	Lynch	sha256$DiP9tW3P$d0c1939e3abe7cb883cb811d026512a4da8115c7298d5248b53a404bd62fa53b	Craig.Lynch@mail.com	2020-07-19 11:48:19.502385	2020-07-19 11:50:38.133201
+1	Amy	Meyer	sha256$4G7PoOKi$4defdbc05d277b1690fad8139dd323cb096052a66b6d7045f452b3c6f3954a88	Amy.Meyer@mail.com	2020-07-19 11:52:23.884529	2020-07-19 11:52:33.84913
+4	Edward	LaFontainer	sha256$KThGz1oM$fbe0de6b868621c66899a316c198f6496f726d0ce67ac13da09f534efbac13c5	Edward.LaFontainer@mail.com	2020-07-21 10:24:26.085761	2020-07-21 10:46:24.880993
+\.
+
+
+--
+-- Name: like_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
+--
+
+SELECT pg_catalog.setval('public.like_id_seq', 5, true);
+
+
+--
+-- Name: post_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
+--
+
+SELECT pg_catalog.setval('public.post_id_seq', 3, true);
+
+
+--
+-- Name: user_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
+--
+
+SELECT pg_catalog.setval('public.user_id_seq', 4, true);
+
+
+--
+-- Name: alembic_version alembic_version_pkc; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.alembic_version
+    ADD CONSTRAINT alembic_version_pkc PRIMARY KEY (version_num);
+
+
+--
+-- Name: like like_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public."like"
+    ADD CONSTRAINT like_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: post post_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.post
+    ADD CONSTRAINT post_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: user user_email_key; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public."user"
+    ADD CONSTRAINT user_email_key UNIQUE (email);
+
+
+--
+-- Name: user user_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public."user"
+    ADD CONSTRAINT user_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: like like_post_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public."like"
+    ADD CONSTRAINT like_post_id_fkey FOREIGN KEY (post_id) REFERENCES public.post(id);
+
+
+--
+-- Name: like like_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public."like"
+    ADD CONSTRAINT like_user_id_fkey FOREIGN KEY (user_id) REFERENCES public."user"(id);
+
+
+--
+-- Name: post post_author_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.post
+    ADD CONSTRAINT post_author_id_fkey FOREIGN KEY (author_id) REFERENCES public."user"(id);
+
+
+--
+-- PostgreSQL database dump complete
+--
+
