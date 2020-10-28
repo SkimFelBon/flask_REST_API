@@ -1,27 +1,39 @@
 # Flask_REST_API for Social Network
 
-### Installation:
-## Getting Started
-```
+### Getting Started
+## Installation:
+```sh
 sudo pip install virtualenv
 git clone https://github.com/SkimFelBon/flask_REST_API
 cd ./flask_REST_API/
+# activate virtualenv
+virtualenv env
 sudo pip install -r requirements.txt
 # pull postgres-image from docker hub: https://hub.docker.com/_/postgres
+docker pull postgres
 # start docker container
+docker run --name my_psql -p 127.0.0.1:3306:3306 -e POSTGRES_PASSWORD=admin -d postgres:latest
 # connect to container
-docker exec -it <container_id> bash
+docker exec -it my_psql bash
 ```
-## Create database
-```
+### Create database
+```sh
 # connect to postgresql from command line:
 psql -U postgres
+```
+```sql
 CREATE DATABASE rest_api;
 -- verify that db was created (list all databases with \l command):
 \l
-# dump data to database:
+```
+### from host copy dumpfile to container
+```sh
+docker cp ./dumpfile my_psql:/root/dumpfile
+# jump to container and dump data to database:
 psql rest_api < dumpfile -U postgres
-# jump to psql one more time, select db and verify that data exists:
+```
+### jump to psql one more time, select db and verify that data exists:
+```sql
 psql -U postgres
 -- connect to our database:
 \c rest_api
@@ -29,28 +41,28 @@ psql -U postgres
 select * from "user";
 ```
 ## also create settings.py
-```python
+```py
 # settings.py
 DB_NAME = "rest_api"
 USER = "postgres"
 PASS = "yourpassword"
+SECRET_KEY = 'replace-me'
 SQLALCHEMY_DATABASE_URI = f"postgresql://{USER}:{PASS}@localhost/{DB_NAME}?client_encoding=utf8"
 ```
 ## start app
-```
+```sh
 flask run
 ```
 #### Basic features:
-* user signup.
-* user login.
-* post creation.
-* post like.
-* post unlike.
-* analytics about how many likes was made. Example url
-/api/analytics/?date_from=2020-02-02&date_to=2020-02-15. analytics aggregated by day. GET
-* search user.
-* user activity an endpoint which will show when user was login last time and when he mades a last request to the service.
-* Implemented token authentication, using JWT
+* [x] `POST /api/signup` user signup.
+* [x] `POST /api/login` user login.
+* [x] `POST /api/post` post creation.
+* [x] `PUT /api/like/<int:post_id>` post like.
+* [x] `PUT /api/unlike/<int:post_id>` post unlike.
+* [x] `GET /api/analytics/?date_from=2020-02-02&date_to=2020-02-15` analytics about how many likes was made. Analytics aggregated by day
+* [x] `GET /api/users/<int:prim_key>` search user.
+* [x] user activity an endpoint which will show when user was login last time and when he mades a last request to the service.
+* [x] Implemented token authentication, using JWT
 #### Signup route
 ```sh
 http://127.0.0.1:5000/api/signup/
